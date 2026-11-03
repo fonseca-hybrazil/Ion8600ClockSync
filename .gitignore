@@ -1,0 +1,10 @@
+bin/
+obj/
+*.user
+.vs/
+
+appsettings.*.local.json
+secrets.json
+
+deploy/*.env
+!deploy/*.env.example

@@ -1,0 +1,76 @@
+﻿@page
+@model Ion8600ClockSync.Pages.IndexModel
+@{
+    ViewData["Title"] = "Sincronismo DNP3";
+}
+
+<div class="dashboard">
+    <header class="topbar">
+        <div class="topbar-title">
+            <h1>Ion8600 ClockSync</h1>
+            <span>Sincronismo de horário DNP3 - medidores ION8600</span>
+        </div>
+        <div class="topbar-status">
+            <a href="/Medidores" class="btn btn-primary">Cadastro de medidores</a>
+            <div class="conn-indicator" id="conn-indicator">
+                <span class="dot" id="conn-dot"></span>
+                <span id="conn-text">Conectando...</span>
+            </div>
+            <span class="last-update" id="last-update">--:--:--</span>
+        </div>
+    </header>
+
+    <section class="summary">
+        <div class="tile">
+            <span class="tile-label">Medidores cadastrados</span>
+            <span class="tile-value" id="summary-total">@Model.Status.Count</span>
+        </div>
+        <div class="tile">
+            <span class="tile-label">Sincronismo OK</span>
+            <span class="tile-value ok" id="summary-ok">0</span>
+        </div>
+        <div class="tile">
+            <span class="tile-label">Com falha</span>
+            <span class="tile-value alert" id="summary-falha">0</span>
+        </div>
+        <div class="tile">
+            <span class="tile-label">Aguardando habilitação DNP</span>
+            <span class="tile-value idle" id="summary-aguardando">0</span>
+        </div>
+    </section>
+
+    <section class="medidor-grid">
+        @foreach (var item in Model.Status)
+        {
+            <div class="medidor-panel" data-medidor-id="@item.Id" data-dnp-habilitado="@item.DnpHabilitado.ToString().ToLowerInvariant()">
+                <div class="medidor-panel-header">
+                    <div>
+                        <h2>@item.Nome</h2>
+                        <span class="medidor-ip">@item.Ip</span>
+                    </div>
+                    <div class="status-indicator">
+                        <span class="dot" data-field="status-dot"></span>
+                        <span data-field="status-text">
+                            @(item.DnpHabilitado ? "Aguardando leitura" : "DNP não habilitado")
+                        </span>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric"><span>Último sync (UTC)</span> <strong data-field="ultimo-sync">@(item.UltimoSync?.DataHoraUtc.ToString("dd/MM HH:mm:ss") ?? "--")</strong></div>
+                    <div class="metric"><span>Delay medido</span> <strong data-field="delay">@(item.UltimoSync?.DelayMedidoMs is { } d ? $"{d} ms" : "--")</strong></div>
+                    <div class="metric"><span>Desvio</span> <strong data-field="desvio">@(item.UltimoSync?.DesvioMs is { } dv ? $"{dv} ms" : "--")</strong></div>
+                    <div class="metric"><span>Resultado</span> <strong data-field="resultado">@(item.UltimoSync is null ? "--" : (item.UltimoSync.Sucesso ? "OK" : "Falhou"))</strong></div>
+                </div>
+
+                <div class="erro-box" data-field="erro-box" style="@(item.UltimoSync is { Sucesso: false } ? "" : "display:none")">
+                    <span data-field="erro-text">@item.UltimoSync?.MensagemErro</span>
+                </div>
+            </div>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}

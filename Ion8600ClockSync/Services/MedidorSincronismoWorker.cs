@@ -1,0 +1,138 @@
+using Ion8600ClockSync.Models;
+using Ion8600ClockSync.Services.Clock;
+using Ion8600ClockSync.Services.Dnp3;
+using Microsoft.EntityFrameworkCore;
+
+namespace Ion8600ClockSync.Services;
+
+public class MedidorSincronismoWorker(
+    ILogger<MedidorSincronismoWorker> logger,
+    IServiceScopeFactory scopeFactory,
+    StableClockService clock,
+    IConfiguration configuration) : BackgroundService
+{
+    private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(configuration.GetValue("AppSettings:CheckIntervalSeconds", 60));
+    private readonly TimeSpan _syncInterval = TimeSpan.FromMinutes(configuration.GetValue("AppSettings:SyncIntervalMinutes", 15));
+    private readonly ushort _masterAddress = (ushort)configuration.GetValue("AppSettings:MasterAddress", 1);
+    private readonly TimeSpan _dnpTimeout = TimeSpan.FromSeconds(configuration.GetValue("AppSettings:DnpTimeoutSeconds", 10));
+    private readonly Dictionary<int, DateTime> _ultimoSincronismoUtc = new();
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        using var timer = new PeriodicTimer(_checkInterval);
+        do
+        {
+            try
+            {
+                await VerificarTodosAsync(stoppingToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "Erro no ciclo de verificação de sincronismo (ex: banco de dados indisponível). O site continua no ar.");
+            }
+        }
+        while (await timer.WaitForNextTickAsync(stoppingToken));
+    }
+
+    private async Task VerificarTodosAsync(CancellationToken stoppingToken)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<Dnp3SyncDbContext>();
+
+        var medidores = await db.Medidores
+            .Where(m => m.Ativo && m.DnpHabilitado)
+            .ToListAsync(stoppingToken);
+
+        var historicos = new List<SincronismoHistorico>();
+        foreach (var medidor in medidores)
+        {
+            var historico = await VerificarEsSincronizarSeNecessarioAsync(medidor, stoppingToken);
+            if (historico is not null)
+                historicos.Add(historico);
+        }
+
+        if (historicos.Count > 0)
+        {
+            db.SincronismoHistoricos.AddRange(historicos);
+            await db.SaveChangesAsync(stoppingToken);
+        }
+    }
+
+    private async Task<SincronismoHistorico?> VerificarEsSincronizarSeNecessarioAsync(Medidor medidor, CancellationToken stoppingToken)
+    {
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        timeoutCts.CancelAfter(_dnpTimeout);
+
+        await using var client = new Dnp3Client(medidor.Ip, medidor.Porta, (ushort)medidor.EnderecoDnp, _masterAddress);
+
+        bool precisaSincronizar;
+        try
+        {
+            // Leitura leve só pra checar o relógio e os bits IIN (NEED_TIME / DEVICE_RESTART) do medidor.
+            await client.ReadTimeAsync(timeoutCts.Token);
+
+            bool passouIntervalo = !_ultimoSincronismoUtc.TryGetValue(medidor.Id, out var ultimo)
+                || clock.UtcNow() - ultimo >= _syncInterval;
+
+            if (client.LastIndications.DeviceRestart)
+                logger.LogInformation("Medidor {Nome} sinalizou DEVICE_RESTART - sincronizando imediatamente.", medidor.Nome);
+            else if (client.LastIndications.NeedTime)
+                logger.LogInformation("Medidor {Nome} sinalizou NEED_TIME - sincronizando imediatamente.", medidor.Nome);
+
+            precisaSincronizar = client.LastIndications.NeedTime || client.LastIndications.DeviceRestart || passouIntervalo;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Falha ao verificar status do medidor {Nome} ({Ip})", medidor.Nome, medidor.Ip);
+            return new SincronismoHistorico
+            {
+                IdMedidor = medidor.Id,
+                DataHoraUtc = clock.UtcNow(),
+                Sucesso = false,
+                MensagemErro = ex.Message,
+            };
+        }
+
+        return precisaSincronizar
+            ? await SincronizarMedidorAsync(medidor, client, timeoutCts.Token)
+            : null;
+    }
+
+    private async Task<SincronismoHistorico> SincronizarMedidorAsync(Medidor medidor, Dnp3Client client, CancellationToken ct)
+    {
+        var historico = new SincronismoHistorico
+        {
+            IdMedidor = medidor.Id,
+            DataHoraUtc = clock.UtcNow(),
+        };
+
+        try
+        {
+            int delayMs = await client.MeasureDelayMsAsync(ct);
+            var horarioEnviadoUtc = clock.UtcNow().AddMilliseconds(delayMs / 2.0);
+
+            await client.WriteTimeAsync(new DateTimeOffset(horarioEnviadoUtc, TimeSpan.Zero), ct);
+            var horarioApos = await client.ReadTimeAsync(ct);
+
+            historico.Sucesso = true;
+            historico.DelayMedidoMs = delayMs;
+            historico.HorarioEnviado = horarioEnviadoUtc;
+            historico.HorarioMedidorApos = horarioApos.UtcDateTime;
+            historico.DesvioMs = (long)(horarioApos.UtcDateTime - clock.UtcNow()).TotalMilliseconds;
+
+            _ultimoSincronismoUtc[medidor.Id] = clock.UtcNow();
+
+            logger.LogInformation(
+                "Sincronismo OK no medidor {Nome} ({Ip}): delay={DelayMs}ms, desvio={DesvioMs}ms",
+                medidor.Nome, medidor.Ip, delayMs, historico.DesvioMs);
+        }
+        catch (Exception ex)
+        {
+            historico.Sucesso = false;
+            historico.MensagemErro = ex.Message;
+            logger.LogWarning(ex, "Falha ao sincronizar medidor {Nome} ({Ip})", medidor.Nome, medidor.Ip);
+        }
+
+        return historico;
+    }
+}

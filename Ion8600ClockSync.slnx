@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Ion8600ClockSync.Tests/Ion8600ClockSync.Tests.csproj" />
+  <Project Path="Ion8600ClockSync/Ion8600ClockSync.csproj" />
+</Solution>

@@ -1,0 +1,49 @@
+@page
+@model Ion8600ClockSync.Pages.Medidores.IndexModel
+@{
+    ViewData["Title"] = "Medidores";
+}
+
+<div class="dashboard">
+    <header class="topbar">
+        <div class="topbar-title">
+            <h1>Medidores</h1>
+            <span>Cadastro dos medidores ION8600</span>
+        </div>
+        <div class="topbar-status">
+            <a asp-page="Create" class="btn btn-primary">Novo medidor</a>
+            <a href="/" class="btn">Voltar ao dashboard</a>
+        </div>
+    </header>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>IP</th>
+                <th>Porta</th>
+                <th>Endereço DNP</th>
+                <th>Ativo</th>
+                <th>DNP habilitado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var medidor in Model.Medidores)
+            {
+                <tr>
+                    <td>@medidor.Nome</td>
+                    <td>@medidor.Ip</td>
+                    <td>@medidor.Porta</td>
+                    <td>@medidor.EnderecoDnp</td>
+                    <td>@(medidor.Ativo ? "Sim" : "Não")</td>
+                    <td>@(medidor.DnpHabilitado ? "Sim" : "Não")</td>
+                    <td>
+                        <a asp-page="Edit" asp-route-id="@medidor.Id">Editar</a> |
+                        <a asp-page="Delete" asp-route-id="@medidor.Id">Excluir</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

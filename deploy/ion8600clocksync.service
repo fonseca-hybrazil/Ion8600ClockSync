@@ -1,0 +1,20 @@
+[Unit]
+Description=Ion8600ClockSync - sincronismo de horario DNP3 para medidores ION8600 (ASP.NET Core)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/ion8600clocksync
+ExecStart=/usr/bin/dotnet /var/www/ion8600clocksync/Ion8600ClockSync.dll
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=ion8600clocksync
+User=ion8600clocksync
+Group=ion8600clocksync
+EnvironmentFile=/etc/ion8600clocksync/ion8600clocksync.env
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://localhost:5002
+
+[Install]
+WantedBy=multi-user.target

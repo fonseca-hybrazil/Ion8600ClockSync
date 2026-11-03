@@ -1,0 +1,31 @@
+@page "{id:int}"
+@model Ion8600ClockSync.Pages.Medidores.DeleteModel
+@{
+    ViewData["Title"] = "Excluir medidor";
+}
+
+<div class="dashboard">
+    <header class="topbar">
+        <div class="topbar-title">
+            <h1>Excluir medidor</h1>
+            <span>Tem certeza que deseja excluir este medidor?</span>
+        </div>
+    </header>
+
+    <dl class="row">
+        <dt>Nome</dt>
+        <dd>@Model.Medidor.Nome</dd>
+        <dt>IP</dt>
+        <dd>@Model.Medidor.Ip</dd>
+        <dt>Porta</dt>
+        <dd>@Model.Medidor.Porta</dd>
+    </dl>
+
+    <form method="post">
+        <input type="hidden" asp-for="Medidor.Id" />
+        <div class="actions">
+            <button type="submit" class="btn btn-danger">Excluir</button>
+            <a asp-page="Index" class="btn">Cancelar</a>
+        </div>
+    </form>
+</div>

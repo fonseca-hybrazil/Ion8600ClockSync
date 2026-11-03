@@ -1,0 +1,52 @@
+@page "{id:int}"
+@model Ion8600ClockSync.Pages.Medidores.EditModel
+@{
+    ViewData["Title"] = "Editar medidor";
+}
+
+<div class="dashboard">
+    <header class="topbar">
+        <div class="topbar-title">
+            <h1>Editar medidor</h1>
+        </div>
+    </header>
+
+    <form method="post">
+        <input type="hidden" asp-for="Medidor.Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="form-group">
+            <label asp-for="Medidor.Nome"></label>
+            <input asp-for="Medidor.Nome" type="text" />
+            <span asp-validation-for="Medidor.Nome" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Medidor.Ip">IP</label>
+            <input asp-for="Medidor.Ip" type="text" />
+            <span asp-validation-for="Medidor.Ip" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Medidor.Porta">Porta DNP3</label>
+            <input asp-for="Medidor.Porta" type="number" />
+            <span asp-validation-for="Medidor.Porta" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Medidor.EnderecoDnp">Endereço DNP (Unit ID)</label>
+            <input asp-for="Medidor.EnderecoDnp" type="number" />
+            <span asp-validation-for="Medidor.EnderecoDnp" class="text-danger"></span>
+        </div>
+        <div class="form-check">
+            <input asp-for="Medidor.Ativo" type="checkbox" />
+            <label asp-for="Medidor.Ativo"></label>
+        </div>
+        <div class="form-check">
+            <input asp-for="Medidor.DnpHabilitado" type="checkbox" />
+            <label asp-for="Medidor.DnpHabilitado">DNP habilitado no medidor</label>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a asp-page="Index" class="btn">Cancelar</a>
+        </div>
+    </form>
+</div>

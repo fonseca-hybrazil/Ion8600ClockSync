@@ -1,0 +1,344 @@
+:root {
+  --bg: #11151c;
+  --panel: #171d27;
+  --panel-border: #263040;
+  --text: #e6ebf1;
+  --text-dim: #8a96a8;
+  --accent: #ff8a3d;
+  --ok: #2ecc71;
+  --alert: #ff3b3b;
+  --idle: #4a5568;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+a {
+  color: var(--accent);
+}
+
+.dashboard {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 16px 20px 40px;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 20px;
+}
+
+.topbar-title h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+}
+
+.topbar-title span {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.conn-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.last-update {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--idle);
+  display: inline-block;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.dot.ok {
+  background: var(--ok);
+  box-shadow: 0 0 6px var(--ok);
+}
+
+.dot.alert {
+  background: var(--alert);
+  box-shadow: 0 0 6px var(--alert);
+}
+
+.dot.idle {
+  background: var(--idle);
+  box-shadow: none;
+}
+
+/* Buttons */
+.btn {
+  cursor: pointer;
+  border: 1px solid var(--panel-border);
+  background: #1f2733;
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover {
+  background: #2a3442;
+  border-color: var(--accent);
+}
+
+.btn-primary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-danger {
+  border-color: var(--alert);
+  color: var(--alert);
+}
+
+/* Summary tiles */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.tile {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tile-label {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tile-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.tile-value.ok { color: var(--ok); }
+.tile-value.alert { color: var(--alert); }
+.tile-value.idle { color: var(--text-dim); }
+
+/* Medidor grid/panel */
+.medidor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 950px) {
+  .medidor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.medidor-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 18px 20px 20px;
+}
+
+.medidor-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.medidor-panel-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.medidor-ip {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+}
+
+.metric {
+  background: #1b2330;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-dim);
+}
+
+.metric strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.erro-box {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 59, 59, 0.1);
+  border: 1px solid var(--alert);
+  color: var(--alert);
+  font-size: 0.78rem;
+}
+
+/* Tables (telas de cadastro) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 0.88rem;
+}
+
+th {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* Forms */
+form {
+  max-width: 480px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  background: #1b2330;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.form-check label {
+  margin: 0;
+  color: var(--text);
+}
+
+.text-danger {
+  color: var(--alert);
+  font-size: 0.8rem;
+}
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+dl.row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 6px 12px;
+  margin: 16px 0;
+}
+
+dt {
+  color: var(--text-dim);
+}
