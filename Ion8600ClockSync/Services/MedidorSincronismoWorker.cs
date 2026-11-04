@@ -102,15 +102,13 @@ public class MedidorSincronismoWorker(
         }
         catch (Exception ex)
         {
+            // Isso é uma falha da leitura leve de status (não uma tentativa de sincronismo em si) -
+            // só atualiza o indicador ao vivo (bolinha/erro na tela). Não grava SincronismoHistorico
+            // nem no log de sincronismo, senão "Resultado do último sync" passa a refletir blips de
+            // comunicação em vez do resultado de sincronismos de verdade.
             logger.LogWarning(ex, "Falha ao verificar status do medidor {Nome} ({Ip})", medidor.Nome, medidor.Ip);
             liveStatus.Set(medidor.Id, new MedidorLiveStatus(default, clock.UtcNow(), Sucesso: false, MensagemErro: ex.Message));
-            return new SincronismoHistorico
-            {
-                IdMedidor = medidor.Id,
-                DataHoraUtc = clock.UtcNow(),
-                Sucesso = false,
-                MensagemErro = ex.Message,
-            };
+            return null;
         }
 
         return precisaSincronizar
