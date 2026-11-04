@@ -15,24 +15,27 @@
         var dot = panel.querySelector('[data-field="status-dot"]');
         var statusText = panel.querySelector('[data-field="status-text"]');
         var ultimoSync = medidor.ultimoSync;
+        var horarioAtual = medidor.horarioAtual;
 
         dot.classList.remove("ok", "alert", "idle");
 
+        // A bolinha/erro refletem a leitura leve mais recente (a cada poucos segundos), não o
+        // último sync completo (que só acontece a cada SyncIntervalMinutes) - senão uma falha
+        // pontual fica "presa" na tela até o próximo sync completo, mesmo já tendo normalizado.
         if (!medidor.dnpHabilitado) {
             dot.classList.add("idle");
             statusText.textContent = "DNP não habilitado";
-        } else if (!ultimoSync) {
+        } else if (!horarioAtual) {
             dot.classList.add("idle");
             statusText.textContent = "Aguardando leitura";
-        } else if (ultimoSync.sucesso) {
+        } else if (horarioAtual.sucesso) {
             dot.classList.add("ok");
-            statusText.textContent = "Sincronizado";
+            statusText.textContent = "Comunicando";
         } else {
             dot.classList.add("alert");
-            statusText.textContent = "Falha no sincronismo";
+            statusText.textContent = "Falha na comunicação";
         }
 
-        var horarioAtual = medidor.horarioAtual;
         setField(panel, "horario-atual", horarioAtual && horarioAtual.sucesso ? formatarDataHoraBrasil(horarioAtual.horarioMedidorUtc) : "--");
         setField(panel, "ultimo-sync", ultimoSync ? formatarDataHoraUtc(ultimoSync.dataHoraUtc) : "--");
         setField(panel, "delay", ultimoSync && ultimoSync.delayMedidoMs != null ? ultimoSync.delayMedidoMs + " ms" : "--");
@@ -41,9 +44,9 @@
 
         var erroBox = panel.querySelector('[data-field="erro-box"]');
         var erroText = panel.querySelector('[data-field="erro-text"]');
-        if (ultimoSync && !ultimoSync.sucesso && ultimoSync.mensagemErro) {
+        if (horarioAtual && !horarioAtual.sucesso && horarioAtual.mensagemErro) {
             erroBox.style.display = "";
-            erroText.textContent = ultimoSync.mensagemErro;
+            erroText.textContent = horarioAtual.mensagemErro;
         } else {
             erroBox.style.display = "none";
         }
@@ -62,8 +65,8 @@
     }
 
     function updateSummary(medidores) {
-        var ok = medidores.filter(function (m) { return m.ultimoSync && m.ultimoSync.sucesso; }).length;
-        var falha = medidores.filter(function (m) { return m.ultimoSync && !m.ultimoSync.sucesso; }).length;
+        var ok = medidores.filter(function (m) { return m.dnpHabilitado && m.horarioAtual && m.horarioAtual.sucesso; }).length;
+        var falha = medidores.filter(function (m) { return m.dnpHabilitado && m.horarioAtual && !m.horarioAtual.sucesso; }).length;
         var aguardando = medidores.filter(function (m) { return !m.dnpHabilitado; }).length;
 
         document.getElementById("summary-total").textContent = medidores.length;
