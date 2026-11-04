@@ -1,0 +1,24 @@
+@page
+@model Ion8600ClockSync.Pages.LogModel
+@{
+    ViewData["Title"] = "Log de sincronismo";
+}
+
+<div class="dashboard">
+    <header class="topbar">
+        <div class="topbar-title">
+            <h1>Log de sincronismo</h1>
+            <span>Cada sincronismo completo disparado, com o motivo (Tempo / NEED_TIME / DEVICE_RESTART)</span>
+        </div>
+        <div class="topbar-status">
+            <span class="last-update" id="last-update">Atualizado --:--:--</span>
+            <a href="/" class="btn">Voltar ao dashboard</a>
+        </div>
+    </header>
+
+    <pre class="log-view" id="log-view">@(Model.Linhas.Count == 0 ? "(sem registros ainda)" : string.Join("\n", Model.Linhas))</pre>
+</div>
+
+@section Scripts {
+    <script src="~/js/log.js" asp-append-version="true"></script>
+}

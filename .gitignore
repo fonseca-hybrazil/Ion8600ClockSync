@@ -8,3 +8,6 @@ secrets.json
 
 deploy/*.env
 !deploy/*.env.example
+
+logs/
+*.log

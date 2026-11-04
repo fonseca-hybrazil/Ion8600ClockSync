@@ -14,6 +14,7 @@ builder.Services.AddDbContext<Dnp3SyncDbContext>(options =>
 builder.Services.AddSingleton<StableClockService>();
 builder.Services.AddSingleton<NtpSyncService>();
 builder.Services.AddSingleton<MedidorLiveStatusStore>();
+builder.Services.AddSingleton<SincronismoLogWriter>();
 builder.Services.AddHostedService<NtpClockSyncWorker>();
 builder.Services.AddHostedService<MedidorSincronismoWorker>();
 
@@ -55,6 +56,12 @@ app.MapGet("/api/medidores/status", async (Dnp3SyncDbContext db, MedidorLiveStat
     });
 
     return Results.Ok(status);
+});
+
+app.MapGet("/api/log", async (SincronismoLogWriter syncLog) =>
+{
+    var linhas = await syncLog.ReadLastLinesAsync(maxLinhas: 500);
+    return Results.Ok(linhas);
 });
 
 app.MapRazorPages();

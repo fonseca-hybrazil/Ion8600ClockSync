@@ -44,6 +44,10 @@ MedidorSincronismoWorker --60s--> lê horário + bits IIN de cada medidor ativo
   relógio de referência próprio, sincronizado via NTP (independente de qualquer outro serviço).
 - Cadastro de medidores (`Pages/Medidores`) e dashboard (`Pages/Index`) em EF Core / SQL Server
   — nenhum IP de medidor fica em código ou configuração, só no banco.
+- [`SincronismoLogWriter`](Ion8600ClockSync/Services/SincronismoLogWriter.cs): grava um arquivo de
+  texto (`logs/sincronismo.log`, fora do controle de versão) com cada sincronismo completo
+  disparado e o motivo (`Tempo`, `NEED_TIME`, `DEVICE_RESTART`, ou combinação). Visível na tela
+  `Pages/Log`.
 
 ## Descobertas importantes da documentação oficial Schneider
 

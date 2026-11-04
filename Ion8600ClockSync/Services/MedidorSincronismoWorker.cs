@@ -10,6 +10,7 @@ public class MedidorSincronismoWorker(
     IServiceScopeFactory scopeFactory,
     StableClockService clock,
     MedidorLiveStatusStore liveStatus,
+    SincronismoLogWriter syncLog,
     IConfiguration configuration) : BackgroundService
 {
     private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(configuration.GetValue("AppSettings:CheckIntervalSeconds", 30));
@@ -72,6 +73,7 @@ public class MedidorSincronismoWorker(
         await using var client = new Dnp3Client(medidor.Ip, medidor.Porta, (ushort)medidor.EnderecoDnp, _masterAddress);
 
         bool precisaSincronizar;
+        string motivo = "";
         try
         {
             // Leitura leve pra exibir o horário atual do medidor na tela e checar os bits IIN
@@ -82,12 +84,21 @@ public class MedidorSincronismoWorker(
             bool passouIntervalo = !_ultimoSincronismoUtc.TryGetValue(medidor.Id, out var ultimo)
                 || clock.UtcNow() - ultimo >= _syncInterval;
 
+            var motivos = new List<string>(3);
+            if (client.LastIndications.DeviceRestart)
+                motivos.Add("DEVICE_RESTART");
+            if (client.LastIndications.NeedTime)
+                motivos.Add("NEED_TIME");
+            if (passouIntervalo)
+                motivos.Add("Tempo");
+
             if (client.LastIndications.DeviceRestart)
                 logger.LogInformation("Medidor {Nome} sinalizou DEVICE_RESTART - sincronizando imediatamente.", medidor.Nome);
             else if (client.LastIndications.NeedTime)
                 logger.LogInformation("Medidor {Nome} sinalizou NEED_TIME - sincronizando imediatamente.", medidor.Nome);
 
-            precisaSincronizar = client.LastIndications.NeedTime || client.LastIndications.DeviceRestart || passouIntervalo;
+            precisaSincronizar = motivos.Count > 0;
+            motivo = string.Join(" + ", motivos);
         }
         catch (Exception ex)
         {
@@ -103,11 +114,11 @@ public class MedidorSincronismoWorker(
         }
 
         return precisaSincronizar
-            ? await SincronizarMedidorAsync(medidor, client, timeoutCts.Token)
+            ? await SincronizarMedidorAsync(medidor, client, motivo, timeoutCts.Token)
             : null;
     }
 
-    private async Task<SincronismoHistorico> SincronizarMedidorAsync(Medidor medidor, Dnp3Client client, CancellationToken ct)
+    private async Task<SincronismoHistorico> SincronizarMedidorAsync(Medidor medidor, Dnp3Client client, string motivo, CancellationToken ct)
     {
         var historico = new SincronismoHistorico
         {
@@ -159,6 +170,8 @@ public class MedidorSincronismoWorker(
             historico.MensagemErro = ex.Message;
             logger.LogWarning(ex, "Falha ao sincronizar medidor {Nome} ({Ip})", medidor.Nome, medidor.Ip);
         }
+
+        await syncLog.LogAsync(medidor.Nome, motivo, historico.Sucesso, historico.MensagemErro, historico.DelayMedidoMs, historico.DesvioMs, historico.DataHoraUtc);
 
         return historico;
     }
