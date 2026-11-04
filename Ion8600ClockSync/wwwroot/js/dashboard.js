@@ -33,8 +33,8 @@
         }
 
         var horarioAtual = medidor.horarioAtual;
-        setField(panel, "horario-atual", horarioAtual && horarioAtual.sucesso ? formatarDataHora(horarioAtual.horarioMedidorUtc) : "--");
-        setField(panel, "ultimo-sync", ultimoSync ? formatarDataHora(ultimoSync.dataHoraUtc) : "--");
+        setField(panel, "horario-atual", horarioAtual && horarioAtual.sucesso ? formatarDataHoraBrasil(horarioAtual.horarioMedidorUtc) : "--");
+        setField(panel, "ultimo-sync", ultimoSync ? formatarDataHoraUtc(ultimoSync.dataHoraUtc) : "--");
         setField(panel, "delay", ultimoSync && ultimoSync.delayMedidoMs != null ? ultimoSync.delayMedidoMs + " ms" : "--");
         setField(panel, "desvio", ultimoSync && ultimoSync.desvioMs != null ? ultimoSync.desvioMs + " ms" : "--");
         setField(panel, "resultado", ultimoSync ? (ultimoSync.sucesso ? "OK" : "Falhou") : "--");
@@ -49,9 +49,16 @@
         }
     }
 
-    function formatarDataHora(isoString) {
+    // Sem o "timeZone" explícito o navegador converte pro fuso local do dispositivo que
+    // está vendo a tela - por isso as duas variantes abaixo, em vez de uma função genérica.
+    function formatarDataHoraUtc(isoString) {
         var d = new Date(isoString);
-        return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "UTC" });
+    }
+
+    function formatarDataHoraBrasil(isoString) {
+        var d = new Date(isoString);
+        return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "America/Sao_Paulo" });
     }
 
     function updateSummary(medidores) {
