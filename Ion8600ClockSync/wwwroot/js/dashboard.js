@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    var POLL_MS = 15000;
+    var POLL_MS = 30000;
 
     function setField(panel, field, text) {
         var el = panel.querySelector('[data-field="' + field + '"]');
@@ -32,6 +32,8 @@
             statusText.textContent = "Falha no sincronismo";
         }
 
+        var horarioAtual = medidor.horarioAtual;
+        setField(panel, "horario-atual", horarioAtual && horarioAtual.sucesso ? formatarDataHora(horarioAtual.horarioMedidorUtc) : "--");
         setField(panel, "ultimo-sync", ultimoSync ? formatarDataHora(ultimoSync.dataHoraUtc) : "--");
         setField(panel, "delay", ultimoSync && ultimoSync.delayMedidoMs != null ? ultimoSync.delayMedidoMs + " ms" : "--");
         setField(panel, "desvio", ultimoSync && ultimoSync.desvioMs != null ? ultimoSync.desvioMs + " ms" : "--");

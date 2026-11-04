@@ -6,6 +6,7 @@ public class StableClockService
 {
     private readonly Stopwatch _sw;
     private readonly object _lock = new();
+    private readonly TaskCompletionSource _firstSync = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private DateTime _baseUtc;
 
     public StableClockService()
@@ -20,6 +21,8 @@ public class StableClockService
         {
             _baseUtc = utc - _sw.Elapsed;
         }
+
+        _firstSync.TrySetResult();
     }
 
     public DateTime UtcNow()
@@ -28,5 +31,16 @@ public class StableClockService
         {
             return _baseUtc + _sw.Elapsed;
         }
+    }
+
+    /// <summary>
+    /// Espera o primeiro sincronismo NTP bem-sucedido, para evitar usar o relógio de
+    /// referência (ainda baseado só no DateTime.UtcNow local) antes dele ser corrigido.
+    /// Se o NTP não responder dentro do timeout, segue em frente mesmo assim.
+    /// </summary>
+    public async Task WaitForFirstSyncAsync(TimeSpan timeout, CancellationToken ct)
+    {
+        var delay = Task.Delay(timeout, ct);
+        await Task.WhenAny(_firstSync.Task, delay);
     }
 }

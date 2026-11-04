@@ -57,6 +57,7 @@
                 </div>
 
                 <div class="metrics-grid">
+                    <div class="metric"><span>Horário do medidor (UTC)</span> <strong data-field="horario-atual">@(item.HorarioAtual is { Sucesso: true } h ? h.HorarioMedidorUtc.ToString("dd/MM HH:mm:ss") : "--")</strong></div>
                     <div class="metric"><span>Último sync (UTC)</span> <strong data-field="ultimo-sync">@(item.UltimoSync?.DataHoraUtc.ToString("dd/MM HH:mm:ss") ?? "--")</strong></div>
                     <div class="metric"><span>Delay medido</span> <strong data-field="delay">@(item.UltimoSync?.DelayMedidoMs is { } d ? $"{d} ms" : "--")</strong></div>
                     <div class="metric"><span>Desvio</span> <strong data-field="desvio">@(item.UltimoSync?.DesvioMs is { } dv ? $"{dv} ms" : "--")</strong></div>

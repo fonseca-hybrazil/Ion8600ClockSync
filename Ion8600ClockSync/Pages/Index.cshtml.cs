@@ -1,10 +1,11 @@
 using Ion8600ClockSync.Models;
+using Ion8600ClockSync.Services;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ion8600ClockSync.Pages;
 
-public class IndexModel(Dnp3SyncDbContext db) : PageModel
+public class IndexModel(Dnp3SyncDbContext db, MedidorLiveStatusStore liveStatus) : PageModel
 {
     public IList<MedidorStatusDto> Status { get; set; } = new List<MedidorStatusDto>();
 
@@ -25,6 +26,7 @@ public class IndexModel(Dnp3SyncDbContext db) : PageModel
             Ativo = m.Ativo,
             DnpHabilitado = m.DnpHabilitado,
             UltimoSync = ultimoPorMedidor.FirstOrDefault(h => h.IdMedidor == m.Id),
+            HorarioAtual = liveStatus.Get(m.Id),
         }).ToList();
     }
 }

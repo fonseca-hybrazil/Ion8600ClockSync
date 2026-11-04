@@ -9,9 +9,10 @@ public class MedidorSincronismoWorker(
     ILogger<MedidorSincronismoWorker> logger,
     IServiceScopeFactory scopeFactory,
     StableClockService clock,
+    MedidorLiveStatusStore liveStatus,
     IConfiguration configuration) : BackgroundService
 {
-    private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(configuration.GetValue("AppSettings:CheckIntervalSeconds", 60));
+    private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(configuration.GetValue("AppSettings:CheckIntervalSeconds", 30));
     private readonly TimeSpan _syncInterval = TimeSpan.FromMinutes(configuration.GetValue("AppSettings:SyncIntervalMinutes", 15));
     private readonly ushort _masterAddress = (ushort)configuration.GetValue("AppSettings:MasterAddress", 1);
     private readonly TimeSpan _dnpTimeout = TimeSpan.FromSeconds(configuration.GetValue("AppSettings:DnpTimeoutSeconds", 10));
@@ -19,6 +20,11 @@ public class MedidorSincronismoWorker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Espera o NTP corrigir nosso relógio de referência antes do primeiro ciclo - sem isso,
+        // o primeiro ciclo usaria DateTime.UtcNow local (potencialmente impreciso) pra decidir
+        // o horário a escrever no medidor.
+        await clock.WaitForFirstSyncAsync(TimeSpan.FromSeconds(10), stoppingToken);
+
         using var timer = new PeriodicTimer(_checkInterval);
         do
         {
@@ -68,8 +74,10 @@ public class MedidorSincronismoWorker(
         bool precisaSincronizar;
         try
         {
-            // Leitura leve só pra checar o relógio e os bits IIN (NEED_TIME / DEVICE_RESTART) do medidor.
-            await client.ReadTimeAsync(timeoutCts.Token);
+            // Leitura leve pra exibir o horário atual do medidor na tela e checar os bits IIN
+            // (NEED_TIME / DEVICE_RESTART).
+            var horarioLido = await client.ReadTimeAsync(timeoutCts.Token);
+            liveStatus.Set(medidor.Id, new MedidorLiveStatus(horarioLido.UtcDateTime, clock.UtcNow(), Sucesso: true, MensagemErro: null));
 
             bool passouIntervalo = !_ultimoSincronismoUtc.TryGetValue(medidor.Id, out var ultimo)
                 || clock.UtcNow() - ultimo >= _syncInterval;
@@ -84,6 +92,7 @@ public class MedidorSincronismoWorker(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Falha ao verificar status do medidor {Nome} ({Ip})", medidor.Nome, medidor.Ip);
+            liveStatus.Set(medidor.Id, new MedidorLiveStatus(default, clock.UtcNow(), Sucesso: false, MensagemErro: ex.Message));
             return new SincronismoHistorico
             {
                 IdMedidor = medidor.Id,
@@ -121,6 +130,7 @@ public class MedidorSincronismoWorker(
             historico.DesvioMs = (long)(horarioApos.UtcDateTime - clock.UtcNow()).TotalMilliseconds;
 
             _ultimoSincronismoUtc[medidor.Id] = clock.UtcNow();
+            liveStatus.Set(medidor.Id, new MedidorLiveStatus(horarioApos.UtcDateTime, clock.UtcNow(), Sucesso: true, MensagemErro: null));
 
             logger.LogInformation(
                 "Sincronismo OK no medidor {Nome} ({Ip}): delay={DelayMs}ms, desvio={DesvioMs}ms",

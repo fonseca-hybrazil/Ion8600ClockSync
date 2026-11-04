@@ -13,6 +13,7 @@ builder.Services.AddDbContext<Dnp3SyncDbContext>(options =>
 
 builder.Services.AddSingleton<StableClockService>();
 builder.Services.AddSingleton<NtpSyncService>();
+builder.Services.AddSingleton<MedidorLiveStatusStore>();
 builder.Services.AddHostedService<NtpClockSyncWorker>();
 builder.Services.AddHostedService<MedidorSincronismoWorker>();
 
@@ -33,7 +34,7 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapGet("/api/medidores/status", async (Dnp3SyncDbContext db) =>
+app.MapGet("/api/medidores/status", async (Dnp3SyncDbContext db, MedidorLiveStatusStore liveStatus) =>
 {
     var medidores = await db.Medidores.AsNoTracking().ToListAsync();
     var ultimoPorMedidor = await db.SincronismoHistoricos
@@ -50,6 +51,7 @@ app.MapGet("/api/medidores/status", async (Dnp3SyncDbContext db) =>
         Ativo = m.Ativo,
         DnpHabilitado = m.DnpHabilitado,
         UltimoSync = ultimoPorMedidor.FirstOrDefault(h => h.IdMedidor == m.Id),
+        HorarioAtual = liveStatus.Get(m.Id),
     });
 
     return Results.Ok(status);

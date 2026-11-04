@@ -1,3 +1,5 @@
+using Ion8600ClockSync.Services;
+
 namespace Ion8600ClockSync.Models;
 
 public class MedidorStatusDto
@@ -8,4 +10,5 @@ public class MedidorStatusDto
     public bool Ativo { get; set; }
     public bool DnpHabilitado { get; set; }
     public SincronismoHistorico? UltimoSync { get; set; }
+    public MedidorLiveStatus? HorarioAtual { get; set; }
 }
