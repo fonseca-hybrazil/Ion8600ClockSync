@@ -29,6 +29,9 @@ public static class Dnp3ApplicationLayer
     private const byte VariationTimeAndDate = 1;
     private const byte GroupTimeDelay = 52;
     private const byte VariationTimeDelayFine = 2;
+    private const byte GroupInternalIndications = 80;
+    private const byte VariationInternalIndications = 1;
+    private const byte DeviceRestartIinIndex = 7;
 
     public static byte[] BuildDelayMeasureRequest(byte sequence)
     {
@@ -61,6 +64,24 @@ public static class Dnp3ApplicationLayer
         long ms = utcTime.ToUnixTimeMilliseconds();
         for (int i = 0; i < 6; i++)
             fragment[6 + i] = (byte)(ms >> (8 * i));
+        return PrependTransportHeader(fragment);
+    }
+
+    // IIN1.7 (DEVICE_RESTART) não é limpo automaticamente por um Write de Time and Date - precisa
+    // desse Write separado em Group80Var1 (Internal Indications), index 7, valor 0. Sem isso o
+    // medidor mantém o bit ligado e sinaliza DEVICE_RESTART pra sempre, forçando full sync a cada
+    // ciclo em vez de respeitar o SyncIntervalMinutes.
+    public static byte[] BuildClearDeviceRestartRequest(byte sequence)
+    {
+        Span<byte> fragment = stackalloc byte[8];
+        fragment[0] = AppControlByte(sequence);
+        fragment[1] = (byte)Dnp3FunctionCode.Write;
+        fragment[2] = GroupInternalIndications;
+        fragment[3] = VariationInternalIndications;
+        fragment[4] = 0x00; // qualifier: sem prefixo, índices 1-octeto start-stop
+        fragment[5] = DeviceRestartIinIndex;
+        fragment[6] = DeviceRestartIinIndex;
+        fragment[7] = 0x00; // limpa o bit
         return PrependTransportHeader(fragment);
     }
 

@@ -28,6 +28,14 @@ public sealed class Dnp3Client(string host, int port, ushort outstationAddress, 
         LastIndications = indications;
     }
 
+    public async Task ClearDeviceRestartAsync(CancellationToken ct)
+    {
+        var request = Dnp3ApplicationLayer.BuildClearDeviceRestartRequest(NextSequence());
+        var responseUserData = await SendAndReceiveAsync(request, ct);
+        Dnp3ApplicationLayer.ValidateWriteResponse(responseUserData, out var indications);
+        LastIndications = indications;
+    }
+
     public async Task<DateTimeOffset> ReadTimeAsync(CancellationToken ct)
     {
         var request = Dnp3ApplicationLayer.BuildReadTimeAndDateRequest(NextSequence());

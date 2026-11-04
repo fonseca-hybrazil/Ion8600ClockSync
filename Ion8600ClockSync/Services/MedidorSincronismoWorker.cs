@@ -135,6 +135,23 @@ public class MedidorSincronismoWorker(
             logger.LogInformation(
                 "Sincronismo OK no medidor {Nome} ({Ip}): delay={DelayMs}ms, desvio={DesvioMs}ms",
                 medidor.Nome, medidor.Ip, delayMs, historico.DesvioMs);
+
+            // O bit IIN1.7 (DEVICE_RESTART) não é limpo automaticamente pelo Write de Time and Date -
+            // o medidor continua sinalizando restart (e forçando full sync a cada ciclo) até o master
+            // confirmar explicitamente com um Write em Group80Var1. Sem isso o SyncIntervalMinutes é
+            // ignorado na prática pra qualquer medidor que já tenha sinalizado DEVICE_RESTART uma vez.
+            if (client.LastIndications.DeviceRestart)
+            {
+                try
+                {
+                    await client.ClearDeviceRestartAsync(ct);
+                    logger.LogInformation("IIN1.7 (DEVICE_RESTART) confirmado/limpo no medidor {Nome}.", medidor.Nome);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Falha ao limpar IIN1.7 (DEVICE_RESTART) do medidor {Nome} - tentará novamente no próximo ciclo.", medidor.Nome);
+                }
+            }
         }
         catch (Exception ex)
         {

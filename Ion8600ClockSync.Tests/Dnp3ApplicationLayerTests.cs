@@ -39,6 +39,16 @@ public class Dnp3ApplicationLayerTests
     }
 
     [Fact]
+    public void BuildClearDeviceRestartRequest_MatchesSpecReferenceFrame()
+    {
+        // Exemplo "Reset Restart IIN Bit" do DNP3 Quick Reference (11-Nov-2002): fragmento de
+        // aplicação C4 02 50 01 00 07 07 00 (sequence=4, Write Group80Var1 index 7..7 = 0).
+        var request = Dnp3ApplicationLayer.BuildClearDeviceRestartRequest(sequence: 4);
+
+        Assert.Equal(new byte[] { 0xC0, 0xC4, 0x02, 80, 1, 0x00, 0x07, 0x07, 0x00 }, request);
+    }
+
+    [Fact]
     public void ParseDelayMeasureResponse_ReadsTimeDelayFineValue()
     {
         byte[] response = { 0xC0, 0xC1, 129, 0x00, 0x00, 52, 2, 0x07, 0x01, 0xFA, 0x00 };
