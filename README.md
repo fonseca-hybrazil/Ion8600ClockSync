@@ -38,8 +38,8 @@ MedidorSincronismoWorker --60s--> lê horário + bits IIN de cada medidor ativo
   `AppSettings:CheckIntervalSeconds` (padrão 60s), faz uma leitura leve do relógio de cada
   medidor ativo+habilitado. Dispara a correção completa (medir delay + escrever + reler pra
   conferir) se o medidor sinalizar `NEED_TIME`/`DEVICE_RESTART` nos bits IIN, **ou** se já tiver
-  passado `AppSettings:SyncIntervalMinutes` (padrão 15min) desde o último sync — o que vier
-  primeiro.
+  passado `AppSettings:SyncIntervalMinutes` (padrão 360min / 6h) desde o último sync — o que
+  vier primeiro.
 - [`NtpSyncService`](Ion8600ClockSync/Services/Clock/NtpSyncService.cs) / [`StableClockService`](Ion8600ClockSync/Services/Clock/StableClockService.cs):
   relógio de referência próprio, sincronizado via NTP (independente de qualquer outro serviço).
 - Cadastro de medidores (`Pages/Medidores`) e dashboard (`Pages/Index`) em EF Core / SQL Server
@@ -65,7 +65,7 @@ Seção `AppSettings` do `appsettings.json` (ou `AppSettings__<Chave>` em produ�
 | Chave | Descrição | Padrão |
 |---|---|---|
 | `CheckIntervalSeconds` | Intervalo da leitura leve de status (IIN) | `60` |
-| `SyncIntervalMinutes` | Intervalo máximo entre sincronismos completos | `15` |
+| `SyncIntervalMinutes` | Intervalo máximo entre sincronismos completos | `360` |
 | `MasterAddress` | Endereço DNP3 da nossa própria estação (master) | `1` |
 | `DnpTimeoutSeconds` | Timeout de cada operação DNP3 | `10` |
 

@@ -13,7 +13,7 @@ public class MedidorSincronismoWorker(
     IConfiguration configuration) : BackgroundService
 {
     private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(configuration.GetValue("AppSettings:CheckIntervalSeconds", 30));
-    private readonly TimeSpan _syncInterval = TimeSpan.FromMinutes(configuration.GetValue("AppSettings:SyncIntervalMinutes", 15));
+    private readonly TimeSpan _syncInterval = TimeSpan.FromMinutes(configuration.GetValue("AppSettings:SyncIntervalMinutes", 360));
     private readonly ushort _masterAddress = (ushort)configuration.GetValue("AppSettings:MasterAddress", 1);
     private readonly TimeSpan _dnpTimeout = TimeSpan.FromSeconds(configuration.GetValue("AppSettings:DnpTimeoutSeconds", 10));
     private readonly Dictionary<int, DateTime> _ultimoSincronismoUtc = new();
